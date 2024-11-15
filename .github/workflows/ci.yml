@@ -1,0 +1,27 @@
+name: CI
+on:
+  push:
+    branches:
+      - main
+      - leptos_0.6
+  pull_request:
+    branches:
+      - main
+      - leptos_0.6
+jobs:
+  get-leptos-changed:
+    uses: ./.github/workflows/get-leptos-changed.yml
+  get-leptos-matrix:
+    uses: ./.github/workflows/get-leptos-matrix.yml
+  test:
+    name: CI
+    needs: [get-leptos-changed, get-leptos-matrix]
+    if: needs.get-leptos-changed.outputs.leptos_changed == 'true'
+    strategy:
+      matrix: ${{ fromJSON(needs.get-leptos-matrix.outputs.matrix) }}
+      fail-fast: false
+    uses: ./.github/workflows/run-cargo-make-task.yml
+    with:
+      directory: ${{ matrix.directory }}
+      cargo_make_task: "ci"
+      toolchain: nightly-2024-08-01
